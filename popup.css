@@ -1,0 +1,57 @@
+body{
+    background:#020617;
+    color:white;
+    font-family:system-ui;
+    width:300px;
+    padding:15px;
+}
+
+h1{
+    text-align:center;
+    color:#22D3EE;
+}
+
+.form{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:15px;
+}
+
+input{
+    padding:8px;
+    border:none;
+    border-radius:6px;
+}
+
+button{
+    padding:8px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+#addRule{
+    background:#EC4899;
+    color:white;
+    font-weight:bold;
+}
+
+ul{
+    list-style:none;
+    padding:0;
+}
+
+li{
+    background:#020617;
+    border:1px solid #22D3EE;
+    margin-bottom:6px;
+    padding:6px;
+    display:flex;
+    justify-content:space-between;
+}
+
+li button{
+    background:#22D3EE;
+    color:black;
+}
