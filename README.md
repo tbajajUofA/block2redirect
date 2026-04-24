@@ -23,7 +23,6 @@ Example:
 ## Installation (Developer Mode)
 
 1. Clone the repository
-git clone https://github.com/yourname/focus-redirect-extension
 
 
 2. Open Chrome
