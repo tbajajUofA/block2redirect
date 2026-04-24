@@ -2,14 +2,76 @@
 <html>
 
 <head>
-<link rel="stylesheet" href="popup.css">
+<link rel="stylesheet" href="../popup/popup.css">
 </head>
 
-<body>
+<body class="dashboard-page">
 
 <h1>Productivity Dashboard</h1>
 
-<ul id="statsList"></ul>
+<div class="dashboard-grid">
+	<section class="panel">
+		<h3>Blocked Sites</h3>
+		<div class="row">
+			<input id="blockedSiteInput" placeholder="reddit.com">
+			<button id="addBlockedBtn">Add</button>
+		</div>
+		<ul id="blockedSitesList"></ul>
+	</section>
+
+	<section class="panel">
+		<h3>Productive Sites</h3>
+		<div class="row">
+			<input id="productiveSiteInput" placeholder="https://developer.mozilla.org">
+			<button id="addProductiveBtn">Add</button>
+		</div>
+
+		<div class="row">
+			<select id="defaultProductiveSelect"></select>
+			<button id="saveDefaultBtn">Save Default</button>
+		</div>
+
+		<ul id="productiveSitesList"></ul>
+	</section>
+
+	<section class="panel">
+		<h3>Site Mappings</h3>
+		<p class="status-text">Per-site mapping is used first. If no mapping exists, redirect falls back to random/default productive site.</p>
+		<ul id="mappingList"></ul>
+	</section>
+
+	<section class="panel">
+		<h3>Modes</h3>
+		<label><input type="checkbox" id="focusToggle"> Focus Mode</label>
+		<label><input type="checkbox" id="randomToggle"> Random Productive Fallback</label>
+		<label><input type="checkbox" id="punishToggle"> Punishment Mode</label>
+		<label><input type="checkbox" id="timerToggle"> Timer Session Mode</label>
+
+		<div class="row">
+			<input type="number" id="punishThresholdInput" min="1" placeholder="Punishment threshold">
+			<button id="saveThresholdBtn">Save</button>
+		</div>
+	</section>
+
+	<section class="panel">
+		<h3>Timer Sessions</h3>
+		<div class="row">
+			<input type="number" id="workMinutesInput" min="1" placeholder="Work minutes">
+			<input type="number" id="breakMinutesInput" min="1" placeholder="Break minutes">
+			<button id="saveSessionConfigBtn">Save</button>
+		</div>
+		<div class="row">
+			<button id="startSessionBtn">Start Session</button>
+			<button id="stopSessionBtn" class="danger">Stop Session</button>
+		</div>
+		<p id="sessionStatus" class="status-text">Session is not active.</p>
+	</section>
+
+	<section class="panel">
+		<h3>Blocked Attempts</h3>
+		<ul id="statsList"></ul>
+	</section>
+</div>
 
 <script src="dashboard.js"></script>
 

@@ -2,8 +2,14 @@ body{
     background:#020617;
     color:white;
     font-family:system-ui;
-    width:300px;
+    width:320px;
     padding:15px;
+}
+
+body.dashboard-page{
+    width:auto;
+    max-width:1200px;
+    margin:0 auto;
 }
 
 h1{
@@ -16,6 +22,42 @@ h1{
     flex-direction:column;
     gap:8px;
     margin-bottom:15px;
+}
+
+.dashboard-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:14px;
+}
+
+.panel{
+    border:1px solid #1e293b;
+    border-radius:10px;
+    padding:12px;
+    background:#0b1224;
+}
+
+.row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-bottom:10px;
+}
+
+.row input,
+.row select{
+    flex:1;
+}
+
+.status-text{
+    font-size:13px;
+    color:#cbd5e1;
+    margin-top:6px;
+}
+
+.danger{
+    background:#ef4444;
+    color:white;
 }
 
 input{
@@ -49,6 +91,7 @@ li{
     padding:6px;
     display:flex;
     justify-content:space-between;
+    align-items:center;
 }
 
 li button{

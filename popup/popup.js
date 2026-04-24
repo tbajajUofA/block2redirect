@@ -1,141 +1,186 @@
-const blockInput = document.getElementById("block");
-const redirectInput = document.getElementById("redirect");
-const startInput = document.getElementById("start");
-const endInput = document.getElementById("end");
+const blockedSiteInput = document.getElementById("blockedSite");
+const addBlockedSiteButton = document.getElementById("addBlockedSite");
+const blockedSitesList = document.getElementById("blockedSitesList");
 
-const addButton = document.getElementById("addRule");
-const rulesList = document.getElementById("rulesList");
+const focusToggle = document.getElementById("focusToggle");
+const randomToggle = document.getElementById("randomToggle");
+const punishToggle = document.getElementById("punishToggle");
+const timerToggle = document.getElementById("timerToggle");
 
-function loadRules() {
+function normalizeHost(value) {
 
-    chrome.storage.sync.get(["rules"], (data) => {
+    if (!value) return "";
+
+    let host = value.trim().toLowerCase();
+
+    host = host.replace(/^https?:\/\//, "");
+    host = host.replace(/^www\./, "");
+    host = host.split("/")[0];
+
+    return host;
+
+}
+
+function migrateLegacyRules(callback) {
+
+    chrome.storage.sync.get([
+        "rules",
+        "blockedSites",
+        "productiveSites",
+        "siteMappings",
+        "defaultProductiveSite",
+        "sessionConfig",
+        "sessionState",
+        "timerMode"
+    ], (data) => {
+
+        if (Array.isArray(data.blockedSites)) {
+            callback();
+            return;
+        }
 
         const rules = data.rules || [];
+        const blockedSites = [];
+        const productiveSites = [];
+        const siteMappings = {};
 
-        rulesList.innerHTML = "";
+        rules.forEach((rule) => {
+            const blocked = normalizeHost(rule.block);
+            const redirect = (rule.redirect || "").trim();
 
-        rules.forEach((rule, index) => {
+            if (blocked && !blockedSites.includes(blocked)) {
+                blockedSites.push(blocked);
+            }
+
+            if (redirect && !productiveSites.includes(redirect)) {
+                productiveSites.push(redirect);
+            }
+
+            if (blocked && redirect && !siteMappings[blocked]) {
+                siteMappings[blocked] = redirect;
+            }
+        });
+
+        chrome.storage.sync.set({
+            blockedSites,
+            productiveSites,
+            siteMappings,
+            defaultProductiveSite: data.defaultProductiveSite || productiveSites[0] || "https://leetcode.com/problemset/",
+            sessionConfig: data.sessionConfig || { workMinutes: 25, breakMinutes: 5 },
+            sessionState: data.sessionState || { isActive: false, phase: "work", startedAt: 0, endsAt: 0 },
+            timerMode: data.timerMode ?? false
+        }, callback);
+    });
+
+}
+
+function loadBlockedSites() {
+
+    chrome.storage.sync.get(["blockedSites"], (data) => {
+
+        const blockedSites = data.blockedSites || [];
+
+        blockedSitesList.innerHTML = "";
+
+        blockedSites.forEach((site, index) => {
 
             const li = document.createElement("li");
 
             li.innerHTML = `
-                <div>
-                    <b>${rule.block}</b> → ${rule.redirect}
-                    <br>
-                    <small>${rule.start} - ${rule.end}</small>
-                </div>
+                <span><b>${site}</b></span>
                 <button data-index="${index}">X</button>
             `;
 
-            rulesList.appendChild(li);
+            blockedSitesList.appendChild(li);
 
         });
 
-        document.querySelectorAll("button[data-index]").forEach(btn => {
-
-            btn.onclick = () => removeRule(btn.dataset.index);
-
+        document.querySelectorAll("button[data-index]").forEach((btn) => {
+            btn.onclick = () => removeBlockedSite(Number(btn.dataset.index));
         });
 
     });
 
 }
 
-function removeRule(index) {
+function removeBlockedSite(index) {
 
-    chrome.storage.sync.get(["rules"], (data) => {
+    chrome.storage.sync.get(["blockedSites", "siteMappings"], (data) => {
 
-        const rules = data.rules || [];
+        const blockedSites = data.blockedSites || [];
+        const siteMappings = data.siteMappings || {};
 
-        rules.splice(index, 1);
+        const [removed] = blockedSites.splice(index, 1);
 
-        chrome.storage.sync.set({ rules }, loadRules);
+        if (removed) {
+            delete siteMappings[removed];
+        }
+
+        chrome.storage.sync.set({ blockedSites, siteMappings }, loadBlockedSites);
 
     });
 
 }
 
-addButton.onclick = () => {
+function addBlockedSite() {
 
-    const block = blockInput.value.trim();
-    const redirect = redirectInput.value.trim();
+    const blockedSite = normalizeHost(blockedSiteInput.value);
 
-    const start = startInput.value || "00:00";
-    const end = endInput.value || "23:59";
+    if (!blockedSite) return;
 
-    if (!block || !redirect) return;
+    chrome.storage.sync.get(["blockedSites"], (data) => {
 
-    chrome.storage.sync.get(["rules"], (data) => {
+        const blockedSites = data.blockedSites || [];
 
-        const rules = data.rules || [];
+        if (!blockedSites.includes(blockedSite)) {
+            blockedSites.push(blockedSite);
+        }
 
-        rules.push({
-            block,
-            redirect,
-            start,
-            end
-        });
-
-        chrome.storage.sync.set({ rules }, () => {
-
-            blockInput.value = "";
-            redirectInput.value = "";
-
-            loadRules();
-
+        chrome.storage.sync.set({ blockedSites }, () => {
+            blockedSiteInput.value = "";
+            loadBlockedSites();
         });
 
     });
 
-};
+}
 
-document.getElementById("dashboard").onclick = () => {
+addBlockedSiteButton.onclick = addBlockedSite;
 
-    chrome.tabs.create({
-        url: chrome.runtime.getURL("dashboard.html")
-    });
+blockedSiteInput.addEventListener("keydown", (event) => {
 
-};
-loadRules();
-
-const focusToggle = document.getElementById("focusToggle");
-const randomToggle = document.getElementById("randomToggle");
-const forceToggle = document.getElementById("forceToggle");
-const punishToggle = document.getElementById("punishToggle");
-const forceURL = document.getElementById("forceURL");
-
-chrome.storage.sync.get([
-    "focusMode",
-    "randomMode",
-    "forceMode",
-    "forceURL",
-    "punishmentMode"
-], data => {
-
-    focusToggle.checked = data.focusMode ?? true;
-    randomToggle.checked = data.randomMode ?? false;
-    forceToggle.checked = data.forceMode ?? false;
-    punishToggle.checked = data.punishmentMode ?? false;
-
-    if(data.forceURL){
-        forceURL.value = data.forceURL;
+    if (event.key === "Enter") {
+        addBlockedSite();
     }
 
 });
 
-focusToggle.onchange = () =>
-chrome.storage.sync.set({focusMode:focusToggle.checked})
+document.getElementById("dashboard").onclick = () => {
 
-randomToggle.onchange = () =>
-chrome.storage.sync.set({randomMode:randomToggle.checked})
+    chrome.tabs.create({
+        url: chrome.runtime.getURL("dashboard/dashboard.html")
+    });
 
-forceToggle.onchange = () =>
-chrome.storage.sync.set({forceMode:forceToggle.checked})
+};
 
-punishToggle.onchange = () =>
-chrome.storage.sync.set({punishmentMode:punishToggle.checked})
+chrome.storage.sync.get([
+    "focusMode",
+    "randomMode",
+    "punishmentMode",
+    "timerMode"
+], (data) => {
 
-forceURL.addEventListener("input", () => {
-    chrome.storage.sync.set({forceURL: forceURL.value});
+    focusToggle.checked = data.focusMode ?? true;
+    randomToggle.checked = data.randomMode ?? true;
+    punishToggle.checked = data.punishmentMode ?? false;
+    timerToggle.checked = data.timerMode ?? false;
+
 });
+
+focusToggle.onchange = () => chrome.storage.sync.set({ focusMode: focusToggle.checked });
+randomToggle.onchange = () => chrome.storage.sync.set({ randomMode: randomToggle.checked });
+punishToggle.onchange = () => chrome.storage.sync.set({ punishmentMode: punishToggle.checked });
+timerToggle.onchange = () => chrome.storage.sync.set({ timerMode: timerToggle.checked });
+
+migrateLegacyRules(loadBlockedSites);
 
