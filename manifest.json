@@ -15,26 +15,8 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup/popup.html"
   }
 }
 
 
-{
- "manifest_version":3,
- "name":"Focus Redirect",
- "version":"1.0",
-
- "permissions":[
-   "storage",
-   "tabs"
- ],
-
- "background":{
-   "service_worker":"background.js"
- },
-
- "action":{
-   "default_popup":"popup.html"
- }
-}
