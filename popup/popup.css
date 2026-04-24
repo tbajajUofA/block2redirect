@@ -1,9 +1,10 @@
 body{
     background:#020617;
-    color:white;
+    color:#f8fafc;
     font-family:system-ui;
     width:320px;
     padding:15px;
+    margin:0;
 }
 
 body.dashboard-page{
@@ -15,6 +16,11 @@ body.dashboard-page{
 h1{
     text-align:center;
     color:#22D3EE;
+    margin:0 0 12px;
+}
+
+h3{
+    margin:10px 0 10px;
 }
 
 .form{
@@ -35,6 +41,13 @@ h1{
     border-radius:10px;
     padding:12px;
     background:#0b1224;
+}
+
+.toggle-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin:6px 0;
 }
 
 .row{
@@ -62,26 +75,30 @@ h1{
 
 input{
     padding:8px;
-    border:none;
+    border:1px solid #334155;
+    background:#111827;
+    color:#f8fafc;
     border-radius:6px;
 }
 
 button{
     padding:8px;
-    border:none;
+    border:1px solid #0f172a;
+    background:#22D3EE;
+    color:#0f172a;
+    font-weight:600;
     border-radius:6px;
     cursor:pointer;
 }
 
-#addRule{
-    background:#EC4899;
-    color:white;
-    font-weight:bold;
+button:hover{
+    filter:brightness(0.95);
 }
 
 ul{
     list-style:none;
     padding:0;
+    margin:8px 0 0;
 }
 
 li{
@@ -96,5 +113,10 @@ li{
 
 li button{
     background:#22D3EE;
-    color:black;
+    color:#0f172a;
+}
+
+#dashboard{
+    width:100%;
+    margin-top:10px;
 }
