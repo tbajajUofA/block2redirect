@@ -3,7 +3,6 @@
 A Chrome extension that redirects distracting websites to productive ones.
 
 Example:
-- Reddit → LeetCode
 - YouTube → Indeed
 - Twitter → GitHub
 
