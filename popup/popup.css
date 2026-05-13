@@ -174,7 +174,24 @@ li button{
     color:#0f172a;
 }
 
-#dashboard{
-    width:100%;
-    margin-top:10px;
+.settings-button{
+    position:fixed;
+    top:15px;
+    right:15px;
+    width:32px;
+    height:32px;
+    padding:0;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    background:#0f172a;
+    border:1px solid #334155;
+    cursor:pointer;
+    z-index:1000;
+}
+
+.settings-button:hover{
+    background:#1e293b;
 }

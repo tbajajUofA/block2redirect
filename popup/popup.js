@@ -45,27 +45,28 @@ function getTabHostname(tabUrl) {
 
 }
 
-function syncCurrentTabIfBlocked(host) {
+function getDefaultProductiveSite() {
 
-    if (!host) return;
-
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-
-        const activeTab = Array.isArray(tabs) ? tabs[0] || null : null;
-        const currentHost = getTabHostname(activeTab?.url || "");
-
-        if (!activeTab || !currentHost || currentHost !== host) {
-            return;
-        }
-
-        chrome.runtime.sendMessage({
-            type: "redirectIfBlocked",
-            tabId: activeTab.id,
-            tabUrl: activeTab.url,
-            host
+    return new Promise((resolve) => {
+        chrome.storage.sync.get(["defaultProductiveSite", "productiveSites"], (data) => {
+            const defaultSite = data.defaultProductiveSite || data.productiveSites?.[0] || "https://leetcode.com/problemset/";
+            resolve(ensureUrl(defaultSite));
         });
-
     });
+
+}
+
+async function redirectTabIfBlocked(host, tabId, tabUrl) {
+
+    if (!host || !tabId || !tabUrl || !/^https?:/i.test(tabUrl)) return;
+
+    const defaultRedirect = await getDefaultProductiveSite();
+
+    if (!defaultRedirect || tabUrl.startsWith(defaultRedirect)) {
+        return;
+    }
+
+    chrome.tabs.update(tabId, { url: defaultRedirect });
 
 }
 
@@ -360,15 +361,19 @@ async function addBlockedSite() {
         return;
     }
 
-    saveBlockedSite(blockedSite, {
-        sourceUrl: ensureUrl(blockedSite),
-        faviconUrl: getFaviconUrl(blockedSite, ensureUrl(blockedSite)),
-        title: blockedSite
-    }, () => {
-        blockedSiteInput.value = "";
-        setStatus(`${blockedSite} added to blocked sites.`);
-        loadBlockedSites();
-        syncCurrentTabIfBlocked(blockedSite);
+    getCurrentTab((currentTab) => {
+        saveBlockedSite(blockedSite, {
+            sourceUrl: ensureUrl(blockedSite),
+            faviconUrl: getFaviconUrl(blockedSite, ensureUrl(blockedSite)),
+            title: blockedSite
+        }, () => {
+            blockedSiteInput.value = "";
+            setStatus(`${blockedSite} added to blocked sites.`);
+            loadBlockedSites();
+            if (currentTab && currentTab.id && currentTab.url && getTabHostname(currentTab.url) === blockedSite) {
+                redirectTabIfBlocked(blockedSite, currentTab.id, currentTab.url);
+            }
+        });
     });
 
 }
@@ -408,7 +413,7 @@ function blockCurrentSite() {
         }, () => {
             setStatus(`${host} blocked from the current tab.`);
             loadBlockedSites();
-            syncCurrentTabIfBlocked(host);
+            redirectTabIfBlocked(host, tab.id, tab.url);
         });
 
     });
@@ -429,10 +434,10 @@ blockedSiteInput.addEventListener("keydown", (event) => {
 
 });
 
-document.getElementById("dashboard").onclick = () => {
+document.getElementById("settingsButton").onclick = () => {
 
     chrome.tabs.create({
-        url: chrome.runtime.getURL("dashboard/dashboard.html")
+        url: chrome.runtime.getURL("settings/settings.html")
     });
 
 };

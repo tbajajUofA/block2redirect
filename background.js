@@ -249,102 +249,6 @@ function chooseRedirectUrl(settings, blockedSite, legacyRule) {
 
 }
 
-function redirectCurrentTabIfBlocked(tabId, tabUrl, host, callback) {
-
-    if (!tabUrl || !/^https?:/i.test(tabUrl)) {
-        if (typeof callback === "function") callback(false);
-        return;
-    }
-
-    const tabHostname = host || (() => {
-        try {
-            return new URL(tabUrl).hostname;
-        } catch (_error) {
-            return "";
-        }
-    })();
-
-    if (!tabHostname) {
-        if (typeof callback === "function") callback(false);
-        return;
-    }
-
-    chrome.storage.sync.get([
-        "focusMode",
-        "randomMode",
-        "forceMode",
-        "forceURL",
-        "punishmentMode",
-        "punishThreshold",
-        "rules",
-        "blockedSites",
-        "productiveSites",
-        "siteMappings",
-        "defaultProductiveSite",
-        "timerMode",
-        "sessionConfig",
-        "sessionState"
-    ], (rawSettings) => {
-
-        migrateLegacyRules(rawSettings, (settings) => {
-
-            if (settings.focusMode === false) {
-                if (typeof callback === "function") callback(false);
-                return;
-            }
-
-            const blockedSites = settings.blockedSites || [];
-            const blockedSite = blockedSites.find((site) => hostMatches(tabHostname, site));
-
-            if (!blockedSite) {
-                if (typeof callback === "function") callback(false);
-                return;
-            }
-
-            const sessionState = resolveSessionState(settings.sessionState, settings.sessionConfig);
-
-            if (
-                settings.timerMode &&
-                settings.sessionState &&
-                sessionState.phase !== settings.sessionState.phase
-            ) {
-                chrome.storage.sync.set({ sessionState });
-            }
-
-            if (!shouldEnforceBlock(settings.timerMode, sessionState, settings.sessionConfig)) {
-                if (typeof callback === "function") callback(false);
-                return;
-            }
-
-            trackAttempt(blockedSite);
-
-            shouldPunish(blockedSite, settings.punishThreshold || 5, (punish) => {
-
-                let redirectURL = chooseRedirectUrl(settings, blockedSite, null);
-
-                if (punish && settings.punishmentMode) {
-                    redirectURL = "https://leetcode.com/problemset/";
-                }
-
-                if (!redirectURL || tabUrl.startsWith(redirectURL)) {
-                    if (typeof callback === "function") callback(false);
-                    return;
-                }
-
-                chrome.tabs.update(tabId, { url: redirectURL });
-
-                trackBlock(blockedSite);
-
-                if (typeof callback === "function") callback(true);
-
-            });
-
-        });
-
-    });
-
-}
-
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
     if (changeInfo.status !== "loading") return;
@@ -438,19 +342,5 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         });
 
     });
-
-});
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-
-    if (!message || message.type !== "redirectIfBlocked") {
-        return;
-    }
-
-    redirectCurrentTabIfBlocked(message.tabId, message.tabUrl, message.host, (didRedirect) => {
-        sendResponse({ didRedirect });
-    });
-
-    return true;
 
 });
