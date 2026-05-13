@@ -11,14 +11,17 @@
 
     <h1>Block2Redirect</h1>
 
-    
-
-    <h3>Quick Block Site</h3>
+    <h3>Block Site</h3>
 
     <div class="form">
         <input id="blockedSite" placeholder="Site to block (reddit.com)" aria-label="Blocked site domain">
-        <button id="addBlockedSite">Add Blocked Site</button>
+        <div class="button-row">
+            <button id="addBlockedSite" type="button">Add Blocked Site</button>
+            <button id="blockCurrentSite" type="button" class="secondary">Block Current Site</button>
+        </div>
     </div>
+
+    <div id="statusMessage" class="status-text" aria-live="polite"></div>
 
     <ul id="blockedSitesList"></ul>
 

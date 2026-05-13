@@ -1,11 +1,20 @@
 const blockedSiteInput = document.getElementById("blockedSite");
 const addBlockedSiteButton = document.getElementById("addBlockedSite");
+const blockCurrentSiteButton = document.getElementById("blockCurrentSite");
 const blockedSitesList = document.getElementById("blockedSitesList");
+const statusMessage = document.getElementById("statusMessage");
 
 const focusToggle = document.getElementById("focusToggle");
 const randomToggle = document.getElementById("randomToggle");
 const punishToggle = document.getElementById("punishToggle");
 const timerToggle = document.getElementById("timerToggle");
+
+const DEFAULT_FAVICON_FALLBACK = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+        <rect width="64" height="64" rx="12" fill="#0f172a"/>
+        <path d="M20 18h24a6 6 0 0 1 6 6v16a6 6 0 0 1-6 6H28l-8 8V24a6 6 0 0 1 6-6Z" fill="#22d3ee"/>
+    </svg>
+`);
 
 function normalizeHost(value) {
 
@@ -21,6 +30,179 @@ function normalizeHost(value) {
 
 }
 
+function ensureUrl(value) {
+
+    if (!value) return "";
+
+    const trimmed = value.trim();
+
+    if (!trimmed) return "";
+
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+    return `https://${trimmed}`;
+
+}
+
+function getFaviconUrl(host, sourceUrl = "") {
+
+    if (host) {
+        return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`;
+    }
+
+    return DEFAULT_FAVICON_FALLBACK;
+
+}
+
+function setStatus(message, kind = "info") {
+
+    if (!statusMessage) return;
+
+    statusMessage.textContent = message || "";
+    statusMessage.dataset.kind = kind;
+
+}
+
+function isLikelyHost(host) {
+
+    if (!host) return false;
+
+    if (host.includes(".")) return true;
+
+    return /^localhost(?::\d+)?$/i.test(host) || /^(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?$/.test(host);
+
+}
+
+function checkSiteExists(host) {
+
+    const candidateUrls = [
+        `https://${host}`,
+        `http://${host}`
+    ];
+
+    return new Promise((resolve) => {
+
+        let finished = false;
+
+        const done = (value) => {
+            if (finished) return;
+            finished = true;
+            resolve(value);
+        };
+
+        const timeoutId = setTimeout(() => done(false), 4500);
+
+        const tryNext = (index) => {
+            if (index >= candidateUrls.length) {
+                clearTimeout(timeoutId);
+                done(false);
+                return;
+            }
+
+            fetch(candidateUrls[index], {
+                method: "GET",
+                mode: "no-cors",
+                cache: "no-store"
+            }).then(() => {
+                clearTimeout(timeoutId);
+                done(true);
+            }).catch(() => {
+                tryNext(index + 1);
+            });
+        };
+
+        tryNext(0);
+
+    });
+
+}
+
+function readBlockedSiteData(callback) {
+
+    chrome.storage.sync.get(["blockedSites", "blockedSiteMeta", "siteMappings"], (data) => {
+        callback({
+            blockedSites: data.blockedSites || [],
+            blockedSiteMeta: data.blockedSiteMeta || {},
+            siteMappings: data.siteMappings || {}
+        });
+    });
+
+}
+
+function saveBlockedSite(host, meta, callback) {
+
+    readBlockedSiteData((data) => {
+
+        const blockedSites = data.blockedSites.slice();
+        const blockedSiteMeta = { ...data.blockedSiteMeta };
+
+        if (!blockedSites.includes(host)) {
+            blockedSites.push(host);
+        }
+
+        blockedSiteMeta[host] = {
+            host,
+            sourceUrl: meta?.sourceUrl || ensureUrl(host),
+            faviconUrl: meta?.faviconUrl || getFaviconUrl(host, meta?.sourceUrl || ensureUrl(host)),
+            title: meta?.title || host
+        };
+
+        chrome.storage.sync.set({ blockedSites, blockedSiteMeta }, () => {
+            if (typeof callback === "function") {
+                callback();
+            }
+        });
+
+    });
+
+}
+
+function getCurrentTab(callback) {
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        callback(Array.isArray(tabs) ? tabs[0] || null : null);
+    });
+
+}
+
+function renderBlockedSites() {
+
+    chrome.storage.sync.get(["blockedSites", "blockedSiteMeta"], (data) => {
+
+        const blockedSites = data.blockedSites || [];
+        const blockedSiteMeta = data.blockedSiteMeta || {};
+
+        blockedSitesList.innerHTML = "";
+
+        blockedSites.forEach((site, index) => {
+
+            const meta = blockedSiteMeta[site] || {};
+            const li = document.createElement("li");
+            const faviconUrl = meta.faviconUrl || getFaviconUrl(site, meta.sourceUrl || ensureUrl(site));
+
+            li.innerHTML = `
+                <div class="site-entry">
+                    <img class="site-icon" src="${faviconUrl}" alt="${site} icon" onerror="this.src='${DEFAULT_FAVICON_FALLBACK}'">
+                    <div class="site-labels">
+                        <span class="site-host">${site}</span>
+                        <span class="site-source">${meta.title || meta.sourceUrl || 'Blocked site'}</span>
+                    </div>
+                </div>
+                <button data-index="${index}" type="button">X</button>
+            `;
+
+            blockedSitesList.appendChild(li);
+
+        });
+
+        document.querySelectorAll("button[data-index]").forEach((btn) => {
+            btn.onclick = () => removeBlockedSite(Number(btn.dataset.index));
+        });
+
+    });
+
+}
+
 function migrateLegacyRules(callback) {
 
     chrome.storage.sync.get([
@@ -31,7 +213,8 @@ function migrateLegacyRules(callback) {
         "defaultProductiveSite",
         "sessionConfig",
         "sessionState",
-        "timerMode"
+        "timerMode",
+        "blockedSiteMeta"
     ], (data) => {
 
         if (Array.isArray(data.blockedSites)) {
@@ -65,6 +248,7 @@ function migrateLegacyRules(callback) {
             blockedSites,
             productiveSites,
             siteMappings,
+            blockedSiteMeta: data.blockedSiteMeta || {},
             defaultProductiveSite: data.defaultProductiveSite || productiveSites[0] || "https://leetcode.com/problemset/",
             sessionConfig: data.sessionConfig || { workMinutes: 25, breakMinutes: 5 },
             sessionState: data.sessionState || { isActive: false, phase: "work", startedAt: 0, endsAt: 0 },
@@ -75,69 +259,100 @@ function migrateLegacyRules(callback) {
 }
 
 function loadBlockedSites() {
-
-    chrome.storage.sync.get(["blockedSites"], (data) => {
-
-        const blockedSites = data.blockedSites || [];
-
-        blockedSitesList.innerHTML = "";
-
-        blockedSites.forEach((site, index) => {
-
-            const li = document.createElement("li");
-
-            li.innerHTML = `
-                <span><b>${site}</b></span>
-                <button data-index="${index}">X</button>
-            `;
-
-            blockedSitesList.appendChild(li);
-
-        });
-
-        document.querySelectorAll("button[data-index]").forEach((btn) => {
-            btn.onclick = () => removeBlockedSite(Number(btn.dataset.index));
-        });
-
-    });
+    renderBlockedSites();
 
 }
 
 function removeBlockedSite(index) {
 
-    chrome.storage.sync.get(["blockedSites", "siteMappings"], (data) => {
+    chrome.storage.sync.get(["blockedSites", "siteMappings", "blockedSiteMeta"], (data) => {
 
         const blockedSites = data.blockedSites || [];
         const siteMappings = data.siteMappings || {};
+        const blockedSiteMeta = data.blockedSiteMeta || {};
 
         const [removed] = blockedSites.splice(index, 1);
 
         if (removed) {
             delete siteMappings[removed];
+            delete blockedSiteMeta[removed];
         }
 
-        chrome.storage.sync.set({ blockedSites, siteMappings }, loadBlockedSites);
+        chrome.storage.sync.set({ blockedSites, siteMappings, blockedSiteMeta }, loadBlockedSites);
 
     });
 
 }
 
-function addBlockedSite() {
+async function addBlockedSite() {
 
     const blockedSite = normalizeHost(blockedSiteInput.value);
 
-    if (!blockedSite) return;
+    if (!blockedSite) {
+        setStatus("Enter a site to block.", "error");
+        return;
+    }
 
-    chrome.storage.sync.get(["blockedSites"], (data) => {
+    if (!isLikelyHost(blockedSite)) {
+        setStatus("That does not look like a valid site.", "error");
+        return;
+    }
 
-        const blockedSites = data.blockedSites || [];
+    setStatus(`Checking ${blockedSite}...`);
 
-        if (!blockedSites.includes(blockedSite)) {
-            blockedSites.push(blockedSite);
+    const exists = await checkSiteExists(blockedSite);
+
+    if (!exists) {
+        setStatus("That site could not be reached. Check the spelling and try again.", "error");
+        return;
+    }
+
+    saveBlockedSite(blockedSite, {
+        sourceUrl: ensureUrl(blockedSite),
+        faviconUrl: getFaviconUrl(blockedSite, ensureUrl(blockedSite)),
+        title: blockedSite
+    }, () => {
+        blockedSiteInput.value = "";
+        setStatus(`${blockedSite} added to blocked sites.`);
+        loadBlockedSites();
+    });
+
+}
+
+function blockCurrentSite() {
+
+    getCurrentTab((tab) => {
+
+        if (!tab || !tab.url) {
+            setStatus("Open a web page first.", "error");
+            return;
         }
 
-        chrome.storage.sync.set({ blockedSites }, () => {
-            blockedSiteInput.value = "";
+        if (!/^https?:\/\//i.test(tab.url)) {
+            setStatus("That tab cannot be blocked from here.", "error");
+            return;
+        }
+
+        let host = "";
+
+        try {
+            host = new URL(tab.url).hostname;
+        } catch (_error) {
+            setStatus("Could not read the current site.", "error");
+            return;
+        }
+
+        if (!host) {
+            setStatus("Could not read the current site.", "error");
+            return;
+        }
+
+        saveBlockedSite(host, {
+            sourceUrl: tab.url,
+            faviconUrl: tab.favIconUrl || getFaviconUrl(host, tab.url),
+            title: tab.title || host
+        }, () => {
+            setStatus(`${host} blocked from the current tab.`);
             loadBlockedSites();
         });
 
@@ -146,10 +361,14 @@ function addBlockedSite() {
 }
 
 addBlockedSiteButton.onclick = addBlockedSite;
+if (blockCurrentSiteButton) {
+    blockCurrentSiteButton.onclick = blockCurrentSite;
+}
 
 blockedSiteInput.addEventListener("keydown", (event) => {
 
     if (event.key === "Enter") {
+        event.preventDefault();
         addBlockedSite();
     }
 
@@ -170,17 +389,17 @@ chrome.storage.sync.get([
     "timerMode"
 ], (data) => {
 
-    focusToggle.checked = data.focusMode ?? true;
-    randomToggle.checked = data.randomMode ?? true;
-    punishToggle.checked = data.punishmentMode ?? false;
-    timerToggle.checked = data.timerMode ?? false;
+    if (focusToggle) focusToggle.checked = data.focusMode ?? true;
+    if (randomToggle) randomToggle.checked = data.randomMode ?? true;
+    if (punishToggle) punishToggle.checked = data.punishmentMode ?? false;
+    if (timerToggle) timerToggle.checked = data.timerMode ?? false;
 
 });
 
-focusToggle.onchange = () => chrome.storage.sync.set({ focusMode: focusToggle.checked });
-randomToggle.onchange = () => chrome.storage.sync.set({ randomMode: randomToggle.checked });
-punishToggle.onchange = () => chrome.storage.sync.set({ punishmentMode: punishToggle.checked });
-timerToggle.onchange = () => chrome.storage.sync.set({ timerMode: timerToggle.checked });
+if (focusToggle) focusToggle.onchange = () => chrome.storage.sync.set({ focusMode: focusToggle.checked });
+if (randomToggle) randomToggle.onchange = () => chrome.storage.sync.set({ randomMode: randomToggle.checked });
+if (punishToggle) punishToggle.onchange = () => chrome.storage.sync.set({ punishmentMode: punishToggle.checked });
+if (timerToggle) timerToggle.onchange = () => chrome.storage.sync.set({ timerMode: timerToggle.checked });
 
 migrateLegacyRules(loadBlockedSites);
 

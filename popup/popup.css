@@ -2,7 +2,7 @@ body{
     background:#020617;
     color:#f8fafc;
     font-family:system-ui;
-    width:320px;
+    width:360px;
     padding:15px;
     margin:0;
 }
@@ -28,6 +28,22 @@ h3{
     flex-direction:column;
     gap:8px;
     margin-bottom:15px;
+}
+
+.button-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.button-row button{
+    flex:1 1 0;
+}
+
+.secondary{
+    background:#0f172a;
+    color:#e2e8f0;
+    border-color:#334155;
 }
 
 .dashboard-grid{
@@ -65,7 +81,16 @@ h3{
 .status-text{
     font-size:13px;
     color:#cbd5e1;
-    margin-top:6px;
+    margin:0 0 8px;
+    min-height:1.1em;
+}
+
+.status-text[data-kind="error"]{
+    color:#fca5a5;
+}
+
+.status-text[data-kind="success"]{
+    color:#86efac;
 }
 
 .danger{
@@ -109,6 +134,39 @@ li{
     display:flex;
     justify-content:space-between;
     align-items:center;
+    gap:8px;
+}
+
+.site-entry{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+}
+
+.site-icon{
+    width:20px;
+    height:20px;
+    border-radius:4px;
+    flex:0 0 20px;
+    background:#0f172a;
+}
+
+.site-labels{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+}
+
+.site-host{
+    font-weight:700;
+    word-break:break-word;
+}
+
+.site-source{
+    font-size:12px;
+    color:#94a3b8;
+    word-break:break-word;
 }
 
 li button{
