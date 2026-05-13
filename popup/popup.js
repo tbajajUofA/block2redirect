@@ -16,6 +16,59 @@ const DEFAULT_FAVICON_FALLBACK = "data:image/svg+xml;charset=UTF-8," + encodeURI
     </svg>
 `);
 
+const PLACEHOLDER_EXAMPLES = [
+    "Site to block (reddit.com)",
+    "Try youtube.com",
+    "Block x.com or news.ycombinator.com",
+    "Enter a site like github.com",
+    "Type a domain to block"
+];
+
+function setRandomPlaceholder() {
+
+    if (!blockedSiteInput) return;
+
+    const nextPlaceholder = PLACEHOLDER_EXAMPLES[Math.floor(Math.random() * PLACEHOLDER_EXAMPLES.length)];
+    blockedSiteInput.placeholder = nextPlaceholder;
+
+}
+
+function getTabHostname(tabUrl) {
+
+    if (!tabUrl || !/^https?:\/\//i.test(tabUrl)) return "";
+
+    try {
+        return new URL(tabUrl).hostname;
+    } catch (_error) {
+        return "";
+    }
+
+}
+
+function syncCurrentTabIfBlocked(host) {
+
+    if (!host) return;
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+
+        const activeTab = Array.isArray(tabs) ? tabs[0] || null : null;
+        const currentHost = getTabHostname(activeTab?.url || "");
+
+        if (!activeTab || !currentHost || currentHost !== host) {
+            return;
+        }
+
+        chrome.runtime.sendMessage({
+            type: "redirectIfBlocked",
+            tabId: activeTab.id,
+            tabUrl: activeTab.url,
+            host
+        });
+
+    });
+
+}
+
 function normalizeHost(value) {
 
     if (!value) return "";
@@ -315,6 +368,7 @@ async function addBlockedSite() {
         blockedSiteInput.value = "";
         setStatus(`${blockedSite} added to blocked sites.`);
         loadBlockedSites();
+        syncCurrentTabIfBlocked(blockedSite);
     });
 
 }
@@ -354,6 +408,7 @@ function blockCurrentSite() {
         }, () => {
             setStatus(`${host} blocked from the current tab.`);
             loadBlockedSites();
+            syncCurrentTabIfBlocked(host);
         });
 
     });
@@ -402,4 +457,5 @@ if (punishToggle) punishToggle.onchange = () => chrome.storage.sync.set({ punish
 if (timerToggle) timerToggle.onchange = () => chrome.storage.sync.set({ timerMode: timerToggle.checked });
 
 migrateLegacyRules(loadBlockedSites);
+setRandomPlaceholder();
 
