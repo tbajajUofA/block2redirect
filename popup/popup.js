@@ -32,11 +32,6 @@ const blockCurrentSiteButton = document.getElementById("blockCurrentSite");
 const blockedSitesList = document.getElementById("blockedSitesList");
 const statusMessage = document.getElementById("statusMessage");
 
-const focusToggle = document.getElementById("focusToggle");
-const randomToggle = document.getElementById("randomToggle");
-const punishToggle = document.getElementById("punishToggle");
-const timerToggle = document.getElementById("timerToggle");
-
 const DEFAULT_FAVICON_FALLBACK = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
         <rect width="64" height="64" rx="12" fill="#0f172a"/>
@@ -45,16 +40,21 @@ const DEFAULT_FAVICON_FALLBACK = "data:image/svg+xml;charset=UTF-8," + encodeURI
 `);
 
 const PLACEHOLDER_EXAMPLES = [
-    "Site to block (reddit.com)",
-    "Try youtube.com",
-    "Block x.com or news.ycombinator.com",
+    "Try blocking x.com",
+    "blockexample.com (won't work, just an example)",
+    "Block youtube.com",
     "Enter a site like github.com",
-    "Type a domain to block"
+    "Type a domain to block",
+    "something funny.com (probably doesn't exist)"
 ];
 
 function setRandomPlaceholder() {
+    /*
+    Keeps the UI fresh by rotating through example placeholders
+    each time the popup is opened.
+    */
 
-    if (!blockedSiteInput) return;
+    if (!blockedSiteInput) {return;} 
 
     const nextPlaceholder = PLACEHOLDER_EXAMPLES[Math.floor(Math.random() * PLACEHOLDER_EXAMPLES.length)];
     blockedSiteInput.placeholder = nextPlaceholder;
@@ -62,6 +62,9 @@ function setRandomPlaceholder() {
 }
 
 function getTabHostname(tabUrl) {
+    /*
+    Extracts the hostname from a tab URL for comparison against blocked sites.
+    */
 
     if (!tabUrl || !/^https?:\/\//i.test(tabUrl)) return "";
 

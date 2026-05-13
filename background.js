@@ -56,9 +56,7 @@
 const DEFAULT_PRODUCTIVE_SITES = [
     "https://leetcode.com/problemset/",
     "https://github.com/trending",
-    "https://developer.mozilla.org",
-    "https://www.indeed.com",
-    "https://stackoverflow.com"
+    "https://www.indeed.com"
 ];
 
 const DEFAULT_SESSION_CONFIG = {
