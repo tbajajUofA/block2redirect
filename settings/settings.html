@@ -9,6 +9,42 @@
 
 <body class="settings-page">
 
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Block2Redirect Settings</title>
+	<link rel="stylesheet" href="settings.css">
+</head>
+
+<body class="settings-page">
+	<!-- 
+		SETTINGS PAGE MAIN INTERFACE
+		
+		Full-screen settings management with two-column layout.
+		
+		LEFT COLUMN (50%):
+		- Blocked Sites: Card grid showing all blocked domains with favicons
+		- Productive Sites: Card grid showing redirect targets with favicons
+		- Site Mappings: List-view with blocked-site icon + select dropdown for per-site redirects
+		
+		RIGHT COLUMN (50%):
+		- Blocked Attempts: Stats list showing most-blocked sites with attempt count
+		- Mode Toggles: Native checkbox toggles (Focus, Random, Punishment, Timer) with custom slider styling
+		- Timer Sessions: Work/break minute inputs, start/stop buttons, active session display
+		- Additional Settings: Punishment threshold input, default productive site selector
+		
+		All sites render with favicon metadata from:
+		- blockedSiteMeta (for blocked sites)
+		- Google Favicons API fallback
+		
+		Storage Integration:
+		- Live sync with chrome.storage.sync on every change
+		- Real-time stats from chrome.storage.local
+		- Session state resolution (auto-advance phases)
+	-->
+
 <h1>Settings</h1>
 
 <div class="settings-container">

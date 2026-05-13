@@ -8,6 +8,29 @@
 </head>
 
 <body>
+    <!-- 
+        POPUP MAIN INTERFACE
+        
+        This popup provides quick access to block the current site or add sites to the blocklist.
+        
+        Key Features:
+        - Input field to manually enter a site to block
+        - "Block Current Site" button to instantly block the active tab's site
+        - "Add Blocked Site" button to add manually entered sites after validation
+        - Status message area showing validation/success feedback
+        - List of blocked sites with remove buttons
+        - Settings gear icon to open the full settings page
+        
+        Site Validation:
+        - Performs network reachability check (HTTP GET to validate site exists)
+        - Normalizes domains (strips www, protocol, subpaths)
+        - Rejects empty or malformed input
+        - Automatically shortcuts current tab URL to bypass manual entry
+        
+        Current-Tab Blocking:
+        - Immediately redirects if the blocked site is the active tab
+        - Uses favicon from the tab or falls back to Google Favicons API
+    -->
 
     <h1>Block2Redirect</h1>
 

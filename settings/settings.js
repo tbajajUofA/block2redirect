@@ -1,3 +1,34 @@
+/**
+ * SETTINGS PAGE SCRIPT
+ * 
+ * Comprehensive configuration interface for Block2Redirect.
+ * 
+ * Main Functions:
+ * - renderState(): Fetches storage and renders all panels (sites, toggles, session state)
+ * - renderBlockedSites(): Card grid with favicons from blockedSiteMeta
+ * - renderProductiveSites(): Card grid of redirect targets
+ * - renderMappings(): List of blocked → productive mappings with dropdowns
+ * - loadStats(): Ranked list of blocked attempts from local storage
+ * 
+ * Event Handlers:
+ * - addBlockedSite/addProductiveSite: Add with normalization
+ * - removeBlockedSite/removeProductiveSite: Remove and clean mappings
+ * - saveMapping/saveDefaultProductive/saveThreshold: Persist config changes
+ * - startSession/stopSession: Manage timer mode phases
+ * 
+ * Toggle Handlers (no buttons needed):
+ * - focusToggle, randomToggle, punishToggle, timerToggle: Direct onchange → storage.sync.set()
+ * 
+ * Storage Listeners:
+ * - chrome.storage.onChanged: Re-render on any config change
+ * - setInterval(renderState, 1000): Update session timer display every second
+ * 
+ * Session State Resolution:
+ * - Auto-advances work→break→work phases
+ * - Guards against infinite loops (max 10 phases per call)
+ * - Stores resolved state back to sync if needed
+ */
+
 const DEFAULT_PRODUCTIVE_SITES = [
     "https://leetcode.com/problemset/",
     "https://github.com/trending",

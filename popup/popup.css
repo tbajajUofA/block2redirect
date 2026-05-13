@@ -1,3 +1,27 @@
+/**
+ * POPUP STYLES
+ * 
+ * Compact dark theme for the popup interface.
+ * 
+ * Key Classes:
+ * - .form: Input + buttons container
+ * - .button-row: Flex row for action buttons
+ * - .secondary: Muted button style
+ * - .status-text: User feedback messages
+ * - .site-entry: Blocked site card with icon + name + remove button
+ * - .site-icon: Favicon image display (20px)
+ * - .site-labels: Site name + source metadata
+ * - .site-host: Bold hostname
+ * - .site-source: Dimmed source URL/title
+ * - .settings-button: Gear icon fixed in top-right (32px circle)
+ * 
+ * Dark scheme:
+ * - Background: #020617 (near-black)
+ * - Accent: #22D3EE (cyan)
+ * - Borders: #334155 (dark slate)
+ * - Text: #f8fafc (off-white)
+ */
+
 body{
     background:#020617;
     color:#f8fafc;

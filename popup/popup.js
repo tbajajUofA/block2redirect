@@ -1,3 +1,31 @@
+/**
+ * POPUP SCRIPT
+ * 
+ * Manages the quick-access popup interface for blocking sites.
+ * 
+ * Main Functions:
+ * - addBlockedSite(): Validates typed input and adds to blocked list
+ * - blockCurrentSite(): Blocks the active browser tab's site immediately
+ * - validateAndAdd(): Centralized validation for both entry paths
+ * - renderBlockedSites(): Renders list with favicons from metadata
+ * 
+ * Validation Flow:
+ * 1. normalizeHost(input) → strips protocol, www, subpaths
+ * 2. isLikelyHost(host) → checks for domain pattern or localhost
+ * 3. checkSiteExists(host) → HTTP GET probe to verify reachability
+ * 4. saveBlockedSite() → stores site and metadata (favicon, title, source URL)
+ * 
+ * On-Block Behavior:
+ * - Checks if blocked site is active tab
+ * - If yes, immediately redirects using redirectTabIfBlocked()
+ * - If no, just adds to list
+ * 
+ * Storage Schema:
+ * - blockedSites: string[] (hostnames)
+ * - blockedSiteMeta: { [host]: { faviconUrl, sourceUrl, title } }
+ * - siteMappings: { [host]: redirectUrl } (per-site redirect mapping)
+ */
+
 const blockedSiteInput = document.getElementById("blockedSite");
 const addBlockedSiteButton = document.getElementById("addBlockedSite");
 const blockCurrentSiteButton = document.getElementById("blockCurrentSite");

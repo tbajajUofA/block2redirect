@@ -1,3 +1,58 @@
+/**
+ * BACKGROUND SERVICE WORKER
+ * 
+ * Core enforcement engine for Block2Redirect. Handles all site blocking and redirection.
+ * 
+ * Main Features:
+ * 1. Tab Update Listener (chrome.tabs.onUpdated)
+ *    - Intercepts page loads on blocked sites
+ *    - Checks against focusMode before enforcing
+ *    - Applies session/timer mode gating
+ *    - Handles punishment mode (force to leetcode)
+ * 
+ * 2. Blocked Site Detection
+ *    - Matches active blockedSites array from storage
+ *    - Falls back to legacy rules if needed
+ *    - Supports hostname matching with subdomain support
+ * 
+ * 3. Redirection Logic
+ *    - Per-site mappings (highest priority)
+ *    - Random productive site rotation (if enabled)
+ *    - Default productive site (fallback)
+ *    - Force mode override (site-agnostic redirect)
+ * 
+ * 4. Tracking & Punishment
+ *    - trackAttempt(site): Count per-site block attempts in local storage
+ *    - trackBlock(site): Count per-site successful blocks
+ *    - shouldPunish(site, threshold): Determine if punishment mode applies
+ *    - Punishment redirects to https://leetcode.com/problemset/
+ * 
+ * 5. Session Timer Mode
+ *    - Respects work/break phases
+ *    - Auto-phases when phase.endsAt < now
+ *    - Blocks only during work phase
+ *    - Extends schedule to next day if overnight
+ * 
+ * 6. Schedule Support
+ *    - Rules can specify start:end times (e.g., "09:00":"18:00")
+ *    - Supports overnight ranges (e.g., "23:00":"06:00")
+ *    - Blocks only within active schedule
+ * 
+ * Storage Schema:
+ * - sync:
+ *   - focusMode: bool (master on/off)
+ *   - blockedSites: string[] (hostnames)
+ *   - siteMappings: { [host]: redirectUrl }
+ *   - rules: legacy [{ block, redirect, start?, end? }]
+ *   - timerMode: bool (enable session timer)
+ *   - punishmentMode: bool (enable punishment on attempts)
+ *   - punishThreshold: number (attempts before punishment)
+ *   - sessionState: { isActive, phase, startedAt, endsAt }
+ * - local:
+ *   - stats: { [site]: blockCount } (for UI stats)
+ *   - attempts: { [site]: attemptCount } (for punishment logic)
+ */
+
 const DEFAULT_PRODUCTIVE_SITES = [
     "https://leetcode.com/problemset/",
     "https://github.com/trending",

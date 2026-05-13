@@ -1,3 +1,30 @@
+/**
+ * SETTINGS PAGE STYLES
+ * 
+ * Two-column responsive layout for comprehensive configuration.
+ * 
+ * Key Classes:
+ * - .settings-container: Grid (1fr 1fr) main layout
+ * - .settings-left: 3-row grid (blocked, productive, mappings)
+ * - .settings-right: Flex column for stacked panels
+ * - .sites-grid: Card grid (auto-fill, 130px min) for site displays
+ * - .site-card: Individual site card (icon + name + remove)
+ * - .site-icon: Favicon image (40px)
+ * - .mapping-item: Blocked site + select dropdown
+ * - .toggle-label: Custom checkbox + animated slider
+ * - .toggle-slider: Animated on/off switch (44px × 24px)
+ * - .stats-list: Ranked list of blocked attempts
+ * 
+ * Dark Scheme (inherited from popup):
+ * - Background: #020617
+ * - Accent: #22D3EE (cyan)
+ * - Borders: #1e293b (panel), #334155 (elements)
+ * - Text: #f8fafc (primary), #94a3b8 (secondary)
+ * 
+ * Responsive:
+ * - Below 1200px: Stacks to single column
+ */
+
 body.settings-page{
 	background:#020617;
 	color:#f8fafc;
