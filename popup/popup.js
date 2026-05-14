@@ -31,6 +31,13 @@ const addBlockedSiteButton = document.getElementById("addBlockedSite");
 const blockCurrentSiteButton = document.getElementById("blockCurrentSite");
 const blockedSitesList = document.getElementById("blockedSitesList");
 const statusMessage = document.getElementById("statusMessage");
+ 
+// Toggle elements may not exist in the popup, but ensure variables are declared
+// so references later in the script do not throw ReferenceError.
+const focusToggle = document.getElementById("focusToggle");
+const randomToggle = document.getElementById("randomToggle");
+const punishToggle = document.getElementById("punishToggle");
+const timerToggle = document.getElementById("timerToggle");
 
 const DEFAULT_FAVICON_FALLBACK = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
