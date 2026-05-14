@@ -483,4 +483,21 @@ migrateLegacyRules(() => {
     loadStats();
 });
 
-setInterval(renderState, 1000);
+function updateSessionTimer() {
+    chrome.storage.sync.get(["sessionState", "sessionConfig"], (data) => {
+        const sessionConfig = {
+            workMinutes: Number(data.sessionConfig?.workMinutes) || DEFAULT_SESSION_CONFIG.workMinutes,
+            breakMinutes: Number(data.sessionConfig?.breakMinutes) || DEFAULT_SESSION_CONFIG.breakMinutes
+        };
+        const sessionState = resolveSessionState(data.sessionState, sessionConfig);
+        if (!sessionState.isActive) {
+            sessionStatus.textContent = "Session inactive";
+        } else {
+            const timeLeft = formatTimeLeft(sessionState.endsAt - Date.now());
+            sessionStatus.textContent = `${sessionState.phase.toUpperCase()} - ${timeLeft}`;
+        }
+    });
+}
+
+// Update only the session timer every second — avoid re-rendering the whole UI
+setInterval(updateSessionTimer, 1000);
