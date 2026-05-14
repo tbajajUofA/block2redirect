@@ -30,9 +30,6 @@
  */
 
 const DEFAULT_PRODUCTIVE_SITES = [
-    "https://leetcode.com/problemset/",
-    "https://github.com/trending",
-    "https://developer.mozilla.org",
     "https://www.indeed.com",
     "https://stackoverflow.com"
 ];
@@ -99,6 +96,15 @@ function getFaviconUrl(host, sourceUrl = "") {
         return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`;
     }
     return DEFAULT_FAVICON_FALLBACK;
+}
+
+function pickDefaultProductiveSite(defaultProductiveSite, productiveSites) {
+    const normalizedSites = (productiveSites || []).map(ensureUrl).filter(Boolean);
+    const storedDefault = ensureUrl(defaultProductiveSite);
+    if (storedDefault && normalizedSites.includes(storedDefault)) {
+        return storedDefault;
+    }
+    return normalizedSites[0] || DEFAULT_PRODUCTIVE_SITES[0];
 }
 
 function formatTimeLeft(ms) {
@@ -176,7 +182,7 @@ function migrateLegacyRules(callback) {
             productiveSites,
             siteMappings,
             blockedSiteMeta: data.blockedSiteMeta || {},
-            defaultProductiveSite: data.defaultProductiveSite || productiveSites[0] || DEFAULT_PRODUCTIVE_SITES[0],
+            defaultProductiveSite: pickDefaultProductiveSite(data.defaultProductiveSite, productiveSites),
             sessionConfig: data.sessionConfig || DEFAULT_SESSION_CONFIG,
             sessionState: data.sessionState || { isActive: false, phase: "work", startedAt: 0, endsAt: 0 },
             timerMode: data.timerMode ?? false
@@ -222,7 +228,11 @@ function renderState() {
         const blockedSiteMeta = data.blockedSiteMeta || {};
         const productiveSites = (data.productiveSites || DEFAULT_PRODUCTIVE_SITES).map(ensureUrl).filter(Boolean);
         const siteMappings = data.siteMappings || {};
-        const defaultProductiveSite = ensureUrl(data.defaultProductiveSite || productiveSites[0] || DEFAULT_PRODUCTIVE_SITES[0]);
+        const defaultProductiveSite = pickDefaultProductiveSite(data.defaultProductiveSite, productiveSites);
+
+        if (ensureUrl(data.defaultProductiveSite) !== defaultProductiveSite) {
+            chrome.storage.sync.set({ defaultProductiveSite });
+        }
 
         // Render blocked sites as cards
         blockedSitesList.innerHTML = "";
@@ -354,7 +364,7 @@ function addProductiveSite() {
         }
         chrome.storage.sync.set({
             productiveSites,
-            defaultProductiveSite: data.defaultProductiveSite || productiveSites[0]
+            defaultProductiveSite: pickDefaultProductiveSite(data.defaultProductiveSite, productiveSites)
         }, () => {
             productiveSiteInput.value = "";
             renderState();
@@ -391,9 +401,7 @@ function removeProductiveSite(index) {
                 delete siteMappings[blockedSite];
             }
         }
-        const nextDefault = ensureUrl(data.defaultProductiveSite) === removed
-            ? (productiveSites[0] || DEFAULT_PRODUCTIVE_SITES[0])
-            : ensureUrl(data.defaultProductiveSite) || productiveSites[0] || DEFAULT_PRODUCTIVE_SITES[0];
+        const nextDefault = pickDefaultProductiveSite(data.defaultProductiveSite, productiveSites);
         chrome.storage.sync.set({
             productiveSites,
             siteMappings,

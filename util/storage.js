@@ -101,7 +101,9 @@ function migrateLegacyRules(callback) {
             productiveSites,
             siteMappings,
             blockedSiteMeta: data.blockedSiteMeta || {},
-            defaultProductiveSite: data.defaultProductiveSite || productiveSites[0] || DEFAULT_PRODUCTIVE_SITES[0],
+            defaultProductiveSite: productiveSites.includes(ensureUrl(data.defaultProductiveSite))
+                ? ensureUrl(data.defaultProductiveSite)
+                : productiveSites[0] || DEFAULT_PRODUCTIVE_SITES[0],
             sessionConfig: data.sessionConfig || DEFAULT_SESSION_CONFIG,
             sessionState: data.sessionState || { isActive: false, phase: "work", startedAt: 0, endsAt: 0 },
             timerMode: data.timerMode ?? false

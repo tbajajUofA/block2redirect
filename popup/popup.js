@@ -87,7 +87,11 @@ function getDefaultProductiveSite() {
 
     return new Promise((resolve) => {
         chrome.storage.sync.get(["defaultProductiveSite", "productiveSites"], (data) => {
-            const defaultSite = data.defaultProductiveSite || data.productiveSites?.[0] || "https://leetcode.com/problemset/";
+            const productiveSites = (data.productiveSites || []).map(ensureUrl).filter(Boolean);
+            const storedDefault = ensureUrl(data.defaultProductiveSite);
+            const defaultSite = productiveSites.includes(storedDefault)
+                ? storedDefault
+                : productiveSites[0] || "https://developer.mozilla.org";
             resolve(ensureUrl(defaultSite));
         });
     });
@@ -341,7 +345,9 @@ function migrateLegacyRules(callback) {
             productiveSites,
             siteMappings,
             blockedSiteMeta: data.blockedSiteMeta || {},
-            defaultProductiveSite: data.defaultProductiveSite || productiveSites[0] || "https://leetcode.com/problemset/",
+            defaultProductiveSite: productiveSites.includes(ensureUrl(data.defaultProductiveSite))
+                ? ensureUrl(data.defaultProductiveSite)
+                : productiveSites[0] || "https://developer.mozilla.org",
             sessionConfig: data.sessionConfig || { workMinutes: 25, breakMinutes: 5 },
             sessionState: data.sessionState || { isActive: false, phase: "work", startedAt: 0, endsAt: 0 },
             timerMode: data.timerMode ?? false

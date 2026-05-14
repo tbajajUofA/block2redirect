@@ -98,7 +98,11 @@ function getCurrentTab(callback) {
 function getDefaultProductiveSite() {
     return new Promise((resolve) => {
         chrome.storage.sync.get(["defaultProductiveSite", "productiveSites"], (data) => {
-            const defaultSite = data.defaultProductiveSite || data.productiveSites?.[0] || DEFAULT_PRODUCTIVE_SITES[0];
+            const productiveSites = (data.productiveSites || []).map(ensureUrl).filter(Boolean);
+            const storedDefault = ensureUrl(data.defaultProductiveSite);
+            const defaultSite = productiveSites.includes(storedDefault)
+                ? storedDefault
+                : productiveSites[0] || DEFAULT_PRODUCTIVE_SITES[0];
             resolve(ensureUrl(defaultSite));
         });
     });

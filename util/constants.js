@@ -12,9 +12,8 @@ const DEFAULT_FAVICON_FALLBACK = "data:image/svg+xml;charset=UTF-8," + encodeURI
 `);
 
 const DEFAULT_PRODUCTIVE_SITES = [
-    "https://leetcode.com/problemset/",
-    "https://github.com/trending",
     "https://developer.mozilla.org",
+    "https://github.com/trending",
     "https://www.indeed.com",
     "https://stackoverflow.com"
 ];

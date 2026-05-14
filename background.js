@@ -25,7 +25,7 @@
  *    - trackAttempt(site): Count per-site block attempts in local storage
  *    - trackBlock(site): Count per-site successful blocks
  *    - shouldPunish(site, threshold): Determine if punishment mode applies
- *    - Punishment redirects to https://leetcode.com/problemset/
+ *    - Punishment redirects to the default productive site
  * 
  * 5. Session Timer Mode
  *    - Respects work/break phases
@@ -54,7 +54,7 @@
  */
 
 const DEFAULT_PRODUCTIVE_SITES = [
-    "https://leetcode.com/problemset/",
+    "https://developer.mozilla.org",
     "https://github.com/trending",
     "https://www.indeed.com"
 ];
@@ -261,7 +261,9 @@ function migrateLegacyRules(settings, callback) {
         blockedSites,
         productiveSites,
         siteMappings,
-        defaultProductiveSite: settings.defaultProductiveSite || productiveSites[0] || DEFAULT_PRODUCTIVE_SITES[0],
+        defaultProductiveSite: productiveSites.includes(ensureUrl(settings.defaultProductiveSite))
+            ? ensureUrl(settings.defaultProductiveSite)
+            : productiveSites[0] || DEFAULT_PRODUCTIVE_SITES[0],
         sessionConfig: settings.sessionConfig || DEFAULT_SESSION_CONFIG,
         sessionState: settings.sessionState || { isActive: false, phase: "work", startedAt: 0, endsAt: 0 },
         timerMode: settings.timerMode ?? false
@@ -276,22 +278,26 @@ function chooseRedirectUrl(settings, blockedSite, legacyRule) {
     const siteMappings = settings.siteMappings || {};
     const productiveSites = (settings.productiveSites || []).map(ensureUrl).filter(Boolean);
     const mapped = ensureUrl(siteMappings[blockedSite]);
+    const validMapped = mapped && productiveSites.includes(mapped);
     const defaultProductiveSite = ensureUrl(settings.defaultProductiveSite);
+    const hasValidDefault = defaultProductiveSite && productiveSites.includes(defaultProductiveSite);
+    const legacyRedirect = ensureUrl(legacyRule?.redirect);
+    const validLegacyRedirect = legacyRedirect && productiveSites.includes(legacyRedirect);
     const forceURL = ensureUrl(settings.forceURL);
 
     let redirectURL = "";
 
     if (settings.forceMode && forceURL) {
         redirectURL = forceURL;
-    } else if (mapped) {
+    } else if (validMapped) {
         redirectURL = mapped;
     } else if (settings.randomMode && productiveSites.length > 0) {
         const randomIndex = Math.floor(Math.random() * productiveSites.length);
         redirectURL = productiveSites[randomIndex];
-    } else if (defaultProductiveSite) {
+    } else if (hasValidDefault) {
         redirectURL = defaultProductiveSite;
-    } else if (legacyRule?.redirect) {
-        redirectURL = ensureUrl(legacyRule.redirect);
+    } else if (validLegacyRedirect) {
+        redirectURL = legacyRedirect;
     } else if (productiveSites.length > 0) {
         redirectURL = productiveSites[0];
     } else {
@@ -379,7 +385,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                 let redirectURL = chooseRedirectUrl(settings, blockedSite, matchedRule);
 
                 if (punish && settings.punishmentMode) {
-                    redirectURL = "https://leetcode.com/problemset/";
+                    redirectURL = DEFAULT_PRODUCTIVE_SITES[0];
                 }
 
                 if (!redirectURL || tab.url.startsWith(redirectURL)) {
